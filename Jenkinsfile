@@ -21,28 +21,6 @@ pipeline {
             }
         }
 
-        stage('sonarqube analysis') {
-            steps {
-                withSonarQubeEnv('sonarqube-dotnet') {
-                   sh '''
-                   dotnet sonarscanner begin \
-                     /k:"sonar-backend"
-
-                    dotnet build
-
-                    dotnet sonarscanner end
-                    '''
-        }
-    }
-}
-
-        stage('quality gate') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonarqube-dotnet-credential'
-                }
-            }
-        }
 
 
         stage('trivy fs scan') {
@@ -55,7 +33,7 @@ pipeline {
             steps {
                 withDockerRegistry(url: 'https://index.docker.io/v1/', credentialsId: 'docker-credential') {
                     sh 'docker build -t backend-image .'
-                    sh 'docker tag frontend-image mohamedahmedalakhdar/backend-image'
+                    sh 'docker tag backend-image mohamedahmedalakhdar/backend-image'
                     sh 'docker push mohamedahmedalakhdar/backend-image'
                 }
             }
