@@ -48,12 +48,13 @@ pipeline {
             steps {
                withSonarQubeEnv('sonarqube-dotnet') {
                sh '''
-                  dotnet sonarscanner begin \
-                   /k:"sonar-backend"
+                   export PATH=$PATH:/home/ubuntu/.dotnet/tools
 
-                  dotnet build
+                   dotnet sonarscanner begin /k:"sonar-backend"
 
-                  dotnet sonarscanner end
+                   dotnet build
+
+                   dotnet sonarscanner end
                   '''
                }
            }
