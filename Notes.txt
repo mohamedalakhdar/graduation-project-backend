@@ -1,0 +1,11 @@
+// when i have nav property as list and i want to do operations like add or delete in root entity then when i save changes it gives me error like this
+	"DbUpdateConcurrencyException: The database operation was expected to affect 1 row(s), but actually affected 0 row(s); 
+	data may have been modified or deleted since entities were loaded."
+	the reason for this error is that
+		EF Core is treating a new Program entity as Modified instead of Added. You load the Department with Include, so EF tracks the existing Programs. Then you add a new Program inside the De
+		partment.Programs collection. EF thinks the entity is part of an already tracked graph. Because of that it tries to update it instead of inserting it. The database receives an UPDATE query with a new Id. No row exists with that Id so zero rows are affected. This causes a DbUpdateConcurrencyException. The root cause is adding a new entity inside a tracked navigation collection.
+		EF Core then misclassifies it as Modified instead of Added.
+	how i solve it but i don't is right or not 
+		i made this operations not using root entity but using repo itself 
+
+// add role to getProfile

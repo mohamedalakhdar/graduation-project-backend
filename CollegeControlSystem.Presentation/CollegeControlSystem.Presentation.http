@@ -1,0 +1,6 @@
+@CollegeControlSystem.Presentation_HostAddress = http://localhost:5126
+
+GET {{CollegeControlSystem.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

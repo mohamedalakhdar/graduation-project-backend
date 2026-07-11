@@ -1,0 +1,3 @@
+ASPNETCORE_ENVIRONMENT: "Development"
+Logging__LogLevel__Default: "Debug"
+Logging__LogLevel__Microsoft_AspNetCore: "Information"

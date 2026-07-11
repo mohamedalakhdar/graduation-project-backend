@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: college-config
+  namespace: college-system
+  labels:
+    app.kubernetes.io/name: college-control-system
+    app.kubernetes.io/part-of: college-control-system
+data:
+  ASPNETCORE_ENVIRONMENT: "Development"
+  ASPNETCORE_HTTP_PORTS: "8080"
+  AllowedHosts: "*"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft_AspNetCore: "Warning"

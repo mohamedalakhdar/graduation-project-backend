@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: college-system
+  labels:
+    app.kubernetes.io/name: college-control-system
+    app.kubernetes.io/part-of: college-control-system

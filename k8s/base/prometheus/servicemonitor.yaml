@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api
+  labels:
+    app.kubernetes.io/name: college-control-system
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: college-control-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+    - port: http
+      path: /health
+      interval: 30s
+  namespaceSelector:
+    any: true

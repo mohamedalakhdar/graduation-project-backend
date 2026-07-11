@@ -1,0 +1,3 @@
+ASPNETCORE_ENVIRONMENT: "Production"
+Logging__LogLevel__Default: "Warning"
+Logging__LogLevel__Microsoft_AspNetCore: "Warning"
