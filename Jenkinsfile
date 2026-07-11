@@ -17,7 +17,7 @@ pipeline {
 
         stage('checkout from git') {
             steps {
-                git branch: 'master', url: 'https://github.com/mohamedalakhdar/graduation-project-frontend.git' ,  credentialsId: 'github-credential'
+                git branch: 'master', url: 'https://github.com/mohamedalakhdar/graduation-project-backend.git' ,  credentialsId: 'github-credential'
             }
         }
 
@@ -43,8 +43,30 @@ pipeline {
                 sh 'trivy image mohamedahmedalakhdar/backend-image > trivyimage.txt'
             }
         }    
+        
+        stage('sonarqube analysis') {
+            steps {
+               withSonarQubeEnv('sonarqube-dotnet') {
+               sh '''
+                  dotnet sonarscanner begin \
+                   /k:"sonar-backend"
+
+                  dotnet build
+
+                  dotnet sonarscanner end
+                  '''
+               }
+           }
+        }
 
         
+        stage('quality gate') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonarqube-dotnet-credential'
+                }
+            }
+        }
 
     }
 }
