@@ -1,97 +1,72 @@
-// Import the shared library
-@Library('college-ci-lib') _
-
 pipeline {
-    agent any
+    agent {
+        label 'jenkins-agent'
+    }
 
-    // 1. Tell Jenkins to inject the .NET SDK into the pipeline's PATH
     tools {
-        dotnetsdk 'dotnet-9' // Must match the EXACT name you gave it in Step 2
+        jdk 'java22'
     }
 
-    environment {
-        DOCKER_IMAGE = 'ihany3c/college-control-system'
-        DOCKER_CREDENTIALS_ID = 'dockerhub' // ID from Jenkins Credentials manager
-        APP_VERSION = ''
-    }
 
     stages {
-        stage('Versioning') {
+        stage('clean workspace') {
             steps {
-                script {
-                    // Call the custom step from the shared library
-                    def version = calculateVersion()
-                   echo "The calculated version is ${version}"
-                   // APP_VERSION = calculateVersion()
-                   env.APP_VERSION = version
-                    currentBuild.displayName = "#${env.BUILD_NUMBER} - $env.APP_VERSION}"
-                }
+                cleanWs()
             }
         }
 
-        stage('Build') {
+        stage('checkout from git') {
             steps {
-                buildDotNet()
+                git branch: 'master', url: 'https://github.com/mohamedalakhdar/graduation-project-frontend.git' ,  credentialsId: 'github-credential'
             }
         }
 
-        stage('Test') {
+        stage('sonarqube analysis') {
             steps {
-                testDotNet()
-            }
-        }
+                withSonarQubeEnv('sonarqube-dotnet') {
+                   sh '''
+                   dotnet sonarscanner begin \
+                     /k:"sonar-backend"
 
-        // Only push to Docker Hub if we are on master or develop
-        stage('Docker Build & Push') {
-            when {
-                anyOf {
-                    branch 'master'
-                    branch 'develop'
-                }
-            }
-            steps {
-                dockerBuildAndPush(env.DOCKER_IMAGE, env.APP_VERSION, env.DOCKER_CREDENTIALS_ID)
-                
-                // For master, also push a 'latest' tag
-                script {
-                    if (env.BRANCH_NAME == 'master') {
-                        dockerBuildAndPush(env.DOCKER_IMAGE, 'latest', env.DOCKER_CREDENTIALS_ID)
-                    }
-                }
-            }
-        }
+                    dotnet build
 
-        stage('Deploy') {
-            when {
-                anyOf {
-                    branch 'master'
-                    branch 'develop'
-                }
-            }
-            steps {
-                script {
-                    if (env.BRANCH_NAME == 'develop') {
-                        echo "Deploying to DEVELOPMENT environment..."
-                        // Add your dev deployment script/command here
-                    } else if (env.BRANCH_NAME == 'master') {
-                        echo "Deploying to PRODUCTION environment..."
-                        // Add your prod deployment script/command here
-                    }
-                }
-            }
+                    dotnet sonarscanner end
+                    '''
         }
     }
-    
-    post {
-        always {
-            cleanWs() // Clean workspace after build
+}
+
+        stage('quality gate') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonarqube-dotnet-credential'
+                }
+            }
         }
-        success {
-            echo "Pipeline succeeded!"
+
+
+        stage('trivy fs scan') {
+            steps {
+                sh 'trivy fs . > trivyfs.txt'
+            }
         }
-        failure {
-            echo "Pipeline failed. Check logs."
-            // You could add an email or Slack notification here
-        }
+
+        stage('docker build&push') {
+            steps {
+                withDockerRegistry(url: 'https://index.docker.io/v1/', credentialsId: 'docker-credential') {
+                    sh 'docker build -t backend-image .'
+                    sh 'docker tag frontend-image mohamedahmedalakhdar/backend-image'
+                    sh 'docker push mohamedahmedalakhdar/backend-image'
+                }
+            }
+        }    
+        stage('trivy'){
+            steps {
+                sh 'trivy image mohamedahmedalakhdar/backend-image > trivyimage.txt'
+            }
+        }    
+
+        
+
     }
 }
