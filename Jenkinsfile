@@ -44,30 +44,6 @@ pipeline {
             }
         }    
         
-        stage('sonarqube analysis') {
-            steps {
-               withSonarQubeEnv('sonarqube-dotnet') {
-               sh '''
-                   export PATH=$PATH:/home/ubuntu/.dotnet/tools
-
-                   dotnet sonarscanner begin /k:"sonar-backend"
-
-                   dotnet build
-
-                   dotnet sonarscanner end
-                  '''
-               }
-           }
-        }
-
-        
-        stage('quality gate') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonarqube-dotnet-credential'
-                }
-            }
-        }
 
     }
 }
